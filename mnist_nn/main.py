@@ -72,9 +72,9 @@ def plt_multiple_images(images, labels, labels_pred, figure_title):
 def main(verbose):
     x_train, y_train, x_test, y_test = init_dataset()
     model = NeuralNetwork()
-
     model.build((1, 28, 28))
-    # model.summary()
+    if verbose is True:
+        model.summary()
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
     if not os.path.isdir('models/model'):
@@ -92,7 +92,7 @@ def main(verbose):
         plt_multiple_images(x_test[:img_verif], y_test[:img_verif], y_pred[:img_verif], "Images predictions")
 
         errors = [i for i in range(len(x_test)) if y_pred[i] != y_test[i]]
-        print('Wrong index:', errors)
+        # print('Wrong index:', errors)
         failed_samples = [(x_test[i], y_test[i], y_pred[i]) for i in errors]
 
         plt_multiple_images(*zip(*failed_samples[:12]), "Predictions failed")
