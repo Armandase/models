@@ -8,16 +8,9 @@ from constants import *
 from prettytable import PrettyTable
 from create_model import read_h5_dataset
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-model_path = os.path.join(MODELS_DIR, "07.keras")
 
-
-def main():
-    if not os.path.exists(model_path):
-        print("Can't load model: ", model_path)
-        exit(1)
-
-    loaded_model = keras.models.load_model(model_path)
-
+def compare_metrics():
+    best_model = (None, 0)
     with open(DATASETS_DIR + '/' + BENCHMARK_FILE, "r") as f:
         json_models = json.load(f)
 
@@ -29,10 +22,22 @@ def main():
             data_size = round(model['Data_size'], 1)
             duration = round(model['Duration'], 1)
             accuracy = round(model['Accuracy'], 1)
+            if best_model[1] <= accuracy:
+                best_model = (model_name, accuracy)
             table.add_row([model_name, data_size, duration, accuracy])
 
         print(table)
-    _, _, x_test, y_test = read_h5_dataset('set-48x48-RGB.h5', 3000)
+    return best_model
+def main():
+    best_model = compare_metrics()
+    model_path = os.path.join(MODELS_DIR, "best_model.tf")
+    if not os.path.exists(model_path):
+        print("Can't load model: ", model_path)
+        exit(1)
+
+    loaded_model = keras.models.load_model(model_path)
+
+    _, _, x_test, y_test = read_h5_dataset(best_model[0], 3000)
     y_softmax = loaded_model.predict(x_test)
     y_pred = np.argmax(y_softmax, axis=-1)
     cm = confusion_matrix(y_pred, y_test)

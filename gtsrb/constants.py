@@ -7,8 +7,8 @@ CALLBACK_DIR = "/home/armand/projets/neural_networks/gtsrb"
 CALLBACK_MODELS = 'models'
 CALLBACK_LOGS = 'logs'
 
-SCALE = 0.5
+SCALE = 0.1
 BATCH_SIZE = 64
-EPOCHS = 20
+EPOCHS = 5
 
 DEFAULT_DATASET = 'set-24x24-L.h5'

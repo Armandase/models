@@ -86,16 +86,18 @@ def callback_path():
     return log_dir, models_dir
 
 
-def main(filename: str):
+def main(filename: str, multiple: bool):
     batch_size = BATCH_SIZE
     epochs = EPOCHS
 
     log_dir, models_dir = callback_path()
-    # datasets = ['set-24x24-L.h5', 'set-24x24-RGB-HE.h5',
-    #             'set-48x48-RGB.h5', 'set-24x24-L-LHE.h5',
-    #             'set-48x48-L.h5', 'set-48x48-RGB-HE.h5',
-    #             'set-24x24-RGB.h5', 'set-48x48-L-LHE.h5']
-    datasets = ['set-48x48-RGB.h5']
+    if multiple:
+        datasets = ['set-24x24-L.h5', 'set-24x24-RGB-HE.h5',
+            'set-48x48-RGB.h5', 'set-24x24-L-LHE.h5',
+            'set-48x48-L.h5', 'set-48x48-RGB-HE.h5',
+            'set-24x24-RGB.h5', 'set-48x48-L-LHE.h5']
+    else:
+        datasets = [DEFAULT_DATASET]
 
     output = []
     for dataset in datasets:
@@ -129,5 +131,10 @@ def main(filename: str):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--filename', '-f', type=str, default=DEFAULT_DATASET)
+
+    # --multiple will generated every models possible
+    # --no-multiple use just the default dataset
+    parser.add_argument('--multiple', '-m', type=str, default=False, action=argparse.BooleanOptionalAction)
+
     args = parser.parse_args()
-    main(args.filename)
+    main(args.filename, args.multiple)
