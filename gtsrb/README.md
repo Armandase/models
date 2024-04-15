@@ -2,6 +2,7 @@
 ## A convolutional neural network used to classify traffic signs among 43 different types
 
 The dataset looks like this:
+
 ![Dataset exemple](https://www.catalyzex.com/_next/image?url=https%3A%2F%2Fai2-s2-public.s3.amazonaws.com%2Ffigures%2F2017-08-08%2F0f0ff7b17e66534703a6ddccb3abf67a34ff5b99%2F1-Figure1-1.png&w=640&q=75)
 
 The shape of images could vary, so they are reshaped into a square, either 24x24 or 48x48.
