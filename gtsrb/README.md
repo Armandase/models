@@ -2,7 +2,7 @@
 ## A convolutional neural network used to classify traffic signs among 43 different types
 
 The dataset looks like this:
-![Dataset exemple](https://www.researchgate.net/publication/343758119/figure/fig1/AS:963538231234571@1606736824148/Example-images-from-the-GTSRB-dataset-Identifying-the-class-of-traffic-signs-in-the.jpg)
+![Dataset exemple](https://www.catalyzex.com/_next/image?url=https%3A%2F%2Fai2-s2-public.s3.amazonaws.com%2Ffigures%2F2017-08-08%2F0f0ff7b17e66534703a6ddccb3abf67a34ff5b99%2F1-Figure1-1.png&w=640&q=75)
 
 The shape of images could vary, so they are reshaped into a square, either 24x24 or 48x48.
 
@@ -46,9 +46,11 @@ Overall, this model incorporates convolutional layers for feature extraction, dr
 The output is a probability for each class produced by the softmax function.
 
 
+
 ### Usage
 
 _Take a look at the constants file to set up your own environment_
+
 
 
 __First step__
@@ -59,6 +61,7 @@ This will create few improved datasets
 ![new datasets](https://raw.githubusercontent.com/Armandase/models/main/gtsrb/tools/differents_dataset.png)
 
 
+
 __Second step__
 ```sh
 python3 create_model.py --no-multiple
@@ -66,7 +69,9 @@ python3 create_model.py --no-multiple
 
 This script creates one (default dataset) or few models (every improved datasets).
 
-It saves the best generated model as "best_model.tf". Additionally, you can utilize TensorBoard in the "models/logs" directory to access all training metrics.
+It saves the best generated model as "best_model.tf".
+Additionally, you can utilize TensorBoard in the "models/logs" directory to access all training metrics.
+
 
 
 __Last step__
