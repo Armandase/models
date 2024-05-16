@@ -63,4 +63,4 @@ def generate_dataset():
     x_train, x_test = generate_positions()
     train_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(x_train, x_train, length=SEQUENCE_LEN, batch_size=BATCH_SIZE)
     test_generator = tf.keras.preprocessing.sequence.TimeseriesGenerator(x_test, x_test, length=SEQUENCE_LEN, batch_size=BATCH_SIZE)
-    return train_generator, test_generator
+    return train_generator, test_generator, x_train, x_test
