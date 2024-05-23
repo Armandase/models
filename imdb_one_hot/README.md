@@ -46,7 +46,7 @@ python3 main.py
 ```
 This will create the model and plot training metrics.
 
-![metrics][(https://raw.githubusercontent.com/Armandase/models/main/imdb_one_hot/assets/accuracy.png)]
+![metrics](https://raw.githubusercontent.com/Armandase/models/main/imdb_one_hot/assets/accuracy.png)
 
 
 __Evaluation:__
