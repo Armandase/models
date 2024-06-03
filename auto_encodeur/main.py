@@ -28,34 +28,35 @@ def plot_multiple_images(images, nb_rows=-1, labels=[]):
             plt.title(labels[i-1])
     plt.show()
 
+def print_metrics(test_data, denoised_test, test_clean, predict_class, test_labels):
+    plot_range = 5
+    plot_list = list(test_data[:plot_range])
+    plot_list.extend(denoised_test[:plot_range])
+    plot_list.extend(test_clean[:plot_range])
+
+    label_list = [f"input data {i}" for i in range(plot_range)]
+    for i in range(plot_range):
+        label_list.append(f"model output {str(predict_class[i])}")
+    for i in range(plot_range):
+        label_list.append(f"Real data {test_labels[i]}")
+    plot_multiple_images(plot_list, 3, label_list)
+
 def main():
     train_data, train_clean, train_labels, test_data, test_clean, test_labels = preprocessing()
-
     if os.path.exists(CALLBACK_DIR + 'best_model.tf'):
         model = keras.models.load_model(CALLBACK_DIR + 'best_model.tf')
         denoised_test, predict_class = model.predict(test_data)
         predict_class = np.argmax(predict_class, axis=-1)
-
-        plot_range = 5
-        plot_list = list(test_data[:plot_range])
-        plot_list.extend(denoised_test[:plot_range])
-        plot_list.extend(test_clean[:plot_range])
-
-        label_list = [f"input data {i}" for i in range (plot_range)]
-        for i in range(plot_range):
-            label_list.append(f"model output {str(predict_class[i])}")
-        for i in range(plot_range):
-            label_list.append(f"Real data {test_labels[i]}")
-        plot_multiple_images(plot_list, 3, label_list)
+        print_metrics(test_data, denoised_test, test_clean, predict_class, test_labels)
         return
 
 
     autoencoder_model = create_model()
     autoencoder_model.summary()
     autoencoder_model.compile(optimizer='adam',
-        loss={'denoiser':'binary_crossentropy', 'cnn': 'sparse_categorical_crossentropy'},
-        loss_weights=[1, 1],
-        metrics={'cnn': 'accuracy'})
+        loss={'autoencoder':'binary_crossentropy', 'classifier': 'sparse_categorical_crossentropy'},
+        loss_weights={'autoencoder': 1., 'classifier': 1.},
+        metrics={'classifier': 'accuracy'})
 
     history = autoencoder_model.fit(train_data, [train_clean, train_labels],
                                     epochs=EPOCHS,

@@ -23,7 +23,7 @@ def decoder(input_shape=(LATENT_DIM,)):
     decoder_model = keras.Model(inputs=inputs, outputs=outputs, name="decoder")
     return decoder_model
 
-def cnn(input_shape=(28, 28, 1), num_classes=10):
+def cnn1(input_shape=(28, 28, 1), num_classes=10):
     inputs = keras.Input(shape=input_shape)
 
     x = keras.layers.Conv2D(8, (3, 3), activation='relu')(inputs)
@@ -40,24 +40,57 @@ def cnn(input_shape=(28, 28, 1), num_classes=10):
 
     outputs = keras.layers.Dense(num_classes, activation='softmax')(x)
 
-    cnn_model = keras.Model(inputs=inputs, outputs=outputs, name="cnn")
-    return cnn_model
+    cnn1_model = keras.Model(inputs=inputs, outputs=outputs, name="cnn1")
+    return cnn1_model
+
+def cnn2(input_shape=(28, 28, 1), num_classes=10):
+    inputs = keras.Input(shape=input_shape)
+
+    x = keras.layers.Conv2D(32, (3, 3), activation='relu')(inputs)
+    x = keras.layers.MaxPooling2D((2, 2))(x)
+    x = keras.layers.Dropout(0.25)(x)
+
+    x = keras.layers.Conv2D(64, (3, 3), activation='relu')(x)
+    x = keras.layers.MaxPooling2D((2, 2))(x)
+    x = keras.layers.Dropout(0.25)(x)
+
+    x = keras.layers.Flatten()(x)
+    x = keras.layers.Dense(100, activation='relu')(x)
+    x = keras.layers.Dropout(.5)(x)
+
+    outputs = keras.layers.Dense(num_classes, activation='softmax')(x)
+
+    cnn2_model = keras.Model(inputs=inputs, outputs=outputs, name="cnn2")
+    return cnn2_model
 
 def create_model(input_shape=(28, 28, 1)):
     inputs = keras.Input(shape=input_shape)
 
+    # denoiser
     encoder_model = encoder()
     decoder_model = decoder((LATENT_DIM,))
-    cnn_model = cnn()
-
     latents = encoder_model(inputs)
     outputs = decoder_model(latents)
 
-    denoiser_model = keras.Model(inputs=inputs, outputs=outputs, name='denoiser')
-    denoiser = denoiser_model(inputs)
-    conv_model = cnn_model(inputs)
+    denoiser_model = keras.Model(inputs=inputs, outputs=outputs, name='autoencoder')
 
-    auto_encoder = keras.Model(inputs=inputs, outputs=[denoiser, conv_model], name='autoencoder')
+    # Classifier
+    cnn1_model = cnn1()
+    cnn2_model = cnn2()
+    branch_1 = cnn1_model(inputs)
+    branch_2 = cnn2_model(inputs)
+    x = keras.layers.concatenate([branch_1, branch_2], axis=1)
+    cnn_output = keras.layers.Dense(10, activation='softmax')(x)
+    classifier = keras.Model(inputs=inputs, outputs=cnn_output, name='classifier')
+
+    # build final model
+    input_final = keras.Input(shape=(28, 28, 1))
+    denoiser = denoiser_model(input_final)
+    classifier_model = classifier(input_final)
+
+    # final model
+    auto_encoder = keras.Model(input_final, outputs=[denoiser, classifier_model])
+    # auto_encoder = keras.Model(input_final, outputs={'autoencoder': denoiser, 'classifier': classifier_model})
 
     return auto_encoder
 
