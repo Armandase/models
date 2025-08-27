@@ -50,17 +50,46 @@ def get_dataloader(data, batch_size):
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
     return data_loader
 
-def train(model, data):
-    model.to(device)
-    model.train()
+def softmax_with_temperature(x, θ):
+    # e ^ (x / θ) / sum(e ^ (x / θ))
+    # x = x - np.max(x, axis=1, keepdims=True)
+    x_exp = np.exp(x / θ)
+    return x_exp / np.sum(x_exp / θ, axis=-1, keepdims=True)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    criterion = torch.nn.CrossEntropyLoss()
+def get_loss_distillation():
+    '''
+    min l =N∑θlc (X i , yi ; θ ) + ld (X i , zi ; θ ).
+
+    Avec:
+        => lc (X i , yi ; θ ) = H (σ ( f (X i ; θ )), yi )
+        Avec    H: negative cross entropy
+                σ: softmax function
+                f (X i ; θ ): logits en sortie du modele student
+        => ld (X i , zi ; θ ) = DKL(σT(f(Xi;θ);T),σT(zi;T))
+        Avec    DKL: KL-divergence
+            σT(zi;T): soft logits en sortie du modele teacher
+            σT(f(Xi;θ);T): soft logits en sortie du modele student  
+    '''
+    lc = torch.nn.CrossEntropyLoss()
+    ld = torch.nn.KLDivLoss(reduction="batchmean")
+    
+    return lc, ld
+    
+
+def train(student, teacher, data):
+    student.to(device)
+    teacher.to(device)
+    teacher.eval()
+    student.train()
+
+    optimizer = torch.optim.Adam(student.parameters(), lr=1e-4)
+    criterion, distil_criterion = get_loss_distillation()
 
     train_loader = get_dataloader(data, BATCH_SIZE)
 
-    f1_scores = []
     for epoch in range(EPOCHS):
+        f1_scores_stud = 0
+        f1_scores_teach = 0
         total_loss = 0
         for i, batch in enumerate(train_loader):
             images = batch['image']
@@ -69,17 +98,29 @@ def train(model, data):
             labels = labels.to(device)
 
             optimizer.zero_grad()
-            outputs = model(images).logits
+            outputs = student(images).logits
             loss = criterion(outputs, labels)
-            total_loss = total_loss + loss.item()
+            with torch.no_grad():
+                teacher_outputs = teacher(images).logits
+            temperature = 4.0
+            distil_loss = distil_criterion(
+                torch.nn.functional.log_softmax(outputs / temperature, dim=1),
+                torch.nn.functional.softmax(teacher_outputs / temperature, dim=1)
+            ) * (temperature * temperature)
+            loss = loss + distil_loss
+            total_loss += loss.item()
             loss.backward()
             optimizer.step()
-            
-            f1_scores.append(f1_score(labels.cpu(), outputs.argmax(dim=1).cpu(), average='weighted'))
-        print(f"Epoch [{epoch+1}/{EPOCHS}] completed. Average F1 Score: {sum(f1_scores)/len(f1_scores):.4f}")
+
+            # f1_scores_stud.append(f1_score(labels.cpu(), outputs.argmax(dim=1).cpu(), average='weighted'))
+            # f1_scores_teach.append(f1_score(labels.cpu(), teacher_outputs.argmax(dim=1).cpu(), average='weighted'))
+            f1_scores_stud += f1_score(labels.cpu(), outputs.argmax(dim=1).cpu(), average='weighted')
+            f1_scores_teach += f1_score(labels.cpu(), teacher_outputs.argmax(dim=1).cpu(), average='weighted')
+        print(f"Epoch [{epoch+1}/{EPOCHS}] completed. Average Student F1 Score: {f1_scores_stud:.4f}")
+        print(f"Epoch [{epoch+1}/{EPOCHS}] completed. Average Teacher F1 Score: {f1_scores_teach:.4f}")
         print(f"Epoch [{epoch+1}/{EPOCHS}] completed. Average Loss: {total_loss/len(data):.4f}")
-    torch.save(model.state_dict(), MODEL_SAVE_PATH)
-    return model
+    torch.save(student.state_dict(), MODEL_SAVE_PATH)
+    return student
     
 def test(model, data):
     model.to(device)
@@ -108,7 +149,8 @@ def main():
     beans = get_data()
     num_labels = beans['train'].features['labels'].num_classes
 
-    dinov2 = get_dinov2(num_labels=num_labels)
+    teacher = get_dinov2(num_labels=num_labels)
+    student = get_resnet18(num_labels=num_labels)
 
     train_data = beans['train']
     test_data = beans['test']
