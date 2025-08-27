@@ -1,0 +1,4 @@
+EPOCHS = 100
+BATCH_SIZE = 1
+LEARNING_RATE = 0.001
+MODEL_SAVE_PATH = "models/student_model.pth"
