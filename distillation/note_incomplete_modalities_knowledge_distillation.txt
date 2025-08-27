@@ -1,0 +1,39 @@
+- CCA-based methods maximise la corrélation canonique (linéaire) entre les moadlités pour trouver la structure commune, l'info partagé. N'exploite pas la supplémentarité.
+- DCCA est comme CCA mais permetde capturer des relations non-linéaires.
+- kernel-based algorithms use the multiple kernel methods to combine the kernels of different modalities from linear combination methods such as linear convex combination [26] to nonlinear combination methods [27].
+-Gestion de modele avec des data manques pour certains sujets:
+1) Subspace learning prend en compte seulement les informations partagés.
+Subspace learning algorithms utilize matrix factorization to factorize the modalities into a modality-invariant part and modal specific parts. The modality-invariant part is the used to build predictive models
+2) Impute(attribuer autre chose) missing modalities:
+apres imputation les méthodes de DL multimodal standard peut etre utilisé. 
+Some advanced imputation methods such as cascaded residual autoencoder and adversarial training, which have similar structure as GAN, have been proposed to deal with the modality missing problem. Ces méthodes peuvent générer generer du bruit non désiré surtout pour des petits datasets. Cela peut induire une regression des perfs.
+
+Steps:
+    - Train un modele par modalité avec les données disponibles.
+    - Ces modeles sont utilisé pour apprendre a un modèle étudiant sur les données sans modalité manquante.
+Cela n'induit pas de recréation de la modalité manquante ni de réduction du sample d'entrainement.
+
+
+Distillation:
+- Hinton et al. [8] proposed to use the teacher to label samples with soft labels and then let the student mimic the soft label.
+
+Méthodologie:
+    The student model is then trained with both the true one-hot label {yi , y2 , . . . , y N } and the logits predicted by the teacher {z 1 , z 2 , . . . , z N }.
+    Loss:
+        min l =N∑θlc (X i , yi ; θ ) + ld (X i , zi ; θ ).
+
+        Avec:
+            => lc (X i , yi ; θ ) = H (σ ( f (X i ; θ )), yi )
+            Avec    H: negative cross entropy
+                    σ: softmax function
+                    f (X i ; θ ): logits en sortie du modele student
+            => ld (X i , zi ; θ ) = DKL(σT(f(Xi;θ);T),σT(zi;T))
+            Avec    DKL: KL-divergence
+                    σT(zi;T): soft logits en sortie du modele teacher
+                    σT(f(Xi;θ);T): soft logits en sortie du modele student  
+
+    It is believe that the “soft labels” contain more information
+than the one-hot label
+
+
+Researches have shown for most cases late fusion performs worse than early fusion, i.e., feature level fusion [6, 21].

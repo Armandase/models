@@ -63,4 +63,4 @@ python3 evaluation.py -a= 1 or 0
 
 Evaluation file write, in the terminal, loss and accuracy with train and test dataset.
 
-If you set 'a=1', the evaluation will be on a review that you will need to write 
+If you set 'a=1', the evaluation will be on a review that you will need to write  

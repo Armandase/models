@@ -54,7 +54,7 @@ def main():
     autoencoder_model = create_model()
     autoencoder_model.summary()
     autoencoder_model.compile(optimizer='adam',
-        loss={'autoencoder':'binary_crossentropy', 'classifier': 'sparse_categorical_crossentropy'},
+        loss={'autoencoder': 'binary_crossentropy', 'classifier': 'sparse_categorical_crossentropy'},
         loss_weights={'autoencoder': 1., 'classifier': 1.},
         metrics={'classifier': 'accuracy'})
 
