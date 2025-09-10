@@ -1,0 +1,4 @@
+*.txt
+*.pth
+data/
+__pycache__/
