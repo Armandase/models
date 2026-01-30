@@ -1,3 +1,6 @@
 .venv/
 notes.txt
-
+__pycache__/
+datasets/
+dataset/
+runs/

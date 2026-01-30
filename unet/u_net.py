@@ -2,70 +2,42 @@ import torch.nn as nn
 import torch
 
 class UNet(nn.Module):
-    def __init__(self):
-        super(UNet, self).__init__()
-        self.down64_1 = nn.Conv2d(1, 64, 3, padding=0)
-        self.down64_2 = nn.Conv2d(64, 64, 3, padding=0)
+    def __init__(self, in_channels, nb_labels=2):
+        super().__init__()
 
-        self.down128_1 = nn.Conv2d(64, 128, 3, padding=0)
-        self.down128_2 = nn.Conv2d(128, 128, 3, padding=0)
-        
-        self.down256_1 = nn.Conv2d(128, 256, 3, padding=0)
-        self.down256_2 = nn.Conv2d(256, 256, 3, padding=0)
+        def DoubleConvRelu(in_channels, out_channels):
+            return nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, 3, padding=1),
+                nn.ReLU(),
+                nn.Conv2d(out_channels, out_channels, 3, padding=1),
+                nn.ReLU()
+            )
 
-        self.down512_1 = nn.Conv2d(256, 512, 3, padding=0)
-        self.down512_2 = nn.Conv2d(512, 512, 3, padding=0)
-        
-        self.down1024_1 = nn.Conv2d(512, 1024, 3, padding=0)
-        self.down1024_2 = nn.Conv2d(1024, 1024, 3, padding=0)
+        # left part of the U-Net (downsampling)
+        self.down1 = DoubleConvRelu(in_channels, 64)
+        self.pool1 = nn.MaxPool2d(2)
+        self.down2 = DoubleConvRelu(64, 128)
+        self.pool2 = nn.MaxPool2d(2)
 
-        self.relu = nn.ReLU()
-        self.maxpool = nn.MaxPool2d(2)
+        self.latent = DoubleConvRelu(128, 256)
 
+        # right part of the U-Net (upsampling)
+        self.up2 = nn.ConvTranspose2d(256, 128, 2, stride=2)
+        self.up_block1 = DoubleConvRelu(256, 128)
+        self.up1 = nn.ConvTranspose2d(128, 64, 2, stride=2)
+        self.up_block2 = DoubleConvRelu(128, 64)
+
+        # final output layer labeling each pixel
+        self.final = nn.Conv2d(64, nb_labels, 1)
 
     def forward(self, x):
-        print(f"Input shape: {x.shape}")
-        x = self.down64_1(x)
-        x = self.relu(x)
-        x = self.down64_2(x)
-        x = self.relu(x)
-        x1 = x
-        x = self.maxpool(x)
-        x = self.down128_1(x)
-        x = self.relu(x)
-        x = self.down128_2(x)
-        x = self.relu(x)
-        x2 = x
-        x = self.maxpool(x)
-        x = self.down256_1(x)
-        x = self.relu(x)
-        x = self.down256_2(x)
-        x = self.relu(x)
-        x3 = x
-        x = self.maxpool(x)
-        x = self.down512_1(x)
-        x = self.relu(x)
-        x = self.down512_2(x)
-        x = self.relu(x)
-        x4 = x
-        x = self.maxpool(x)
-        x = self.down1024_1(x)
-        x = self.relu(x)
-        x = self.down1024_2(x)
-        x = self.relu(x)
+        d1 = self.down1(x)
+        d2 = self.down2(self.pool1(d1))
+        x = self.latent(self.pool2(d2))
 
-        print("Shapes at each level:")
-        print(f"Level 1: {x1.shape}")
-        print(f"Level 2: {x2.shape}")
-        print(f"Level 3: {x3.shape}")
-        print(f"Level 4: {x4.shape}")
-        print(f"Bottom Level: {x.shape}")
-        return x
-    
-def test():
-    model = UNet()
-    x = torch.randn((1, 1, 572, 572))
-    output = model(x)
+        x = self.up2(x)
+        x = self.up_block1(torch.cat([x, d2], dim=1))
+        x = self.up1(x)
+        x = self.up_block2(torch.cat([x, d1], dim=1))
 
-if __name__ == "__main__":
-    test()
+        return self.final(x)
