@@ -26,10 +26,15 @@ def main(data_path, annotations_path, epochs, batch_size, learning_rate):
     train_dataset = COCOSegDataset(data_path, coco, img_ids, top_k_cat_ids, transform=get_transform())
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)                                                 
 
-    valid_img_ids = coco.getImgIds(catIds=top_k_cat_ids)[TOP_K_IMAGES_TRAINING:TOP_K_IMAGES_TRAINING+TOP_K_IMAGES_VALID]
+    # Takes last TOP_K_IMAGES_VALID images for validation 
+    valid_img_ids = coco.getImgIds(catIds=top_k_cat_ids)[-TOP_K_IMAGES_VALID:]
     valid_dataset = COCOSegDataset(data_path, coco, valid_img_ids, top_k_cat_ids, transform=get_transform())
     valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
 
+    print('length of train dataset:', len(train_dataset))
+    print('length of valid dataset:', len(valid_dataset))
+    print('Length loader train:', len(train_loader))
+    print('Length loader valid:', len(valid_loader))
     nb_labels = TOP_K_CATEGORIES + 1  # including background
     
     model = UNet(in_channels=3, nb_labels=nb_labels).to(device)
@@ -84,6 +89,7 @@ def main(data_path, annotations_path, epochs, batch_size, learning_rate):
             print("Saved Best Model")
 
         print(f"Epoch [{epoch+1}/{epochs}], Loss: {avg_loss:.4f}, Val Loss: {avg_v_loss:.4f}")
+        print(f"Train IoU: {avg_train_iou:.4f}, Val IoU: {avg_v_iou:.4f}")
         torch.save(model.state_dict(), "last_unet_model.pth")
         print("Saved Last Model")
 
