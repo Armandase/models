@@ -22,6 +22,5 @@ then, to visualize the model's predictions:
 ```sh
 python3 visualizer.py
 ```
-
+<img src="prediction_mnist.gif" alt="Visualizer screenshot" width="40%"/>
 Visualizer allows you to draw a digit on the screen, and the model will predict which digit it is.
-![Visualizer screenshot](prediction_mnist.gif)
